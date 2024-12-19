@@ -21,9 +21,10 @@ Firebase Authentication: For secure user login and registration.
 
 Mockup Image
 
-![d4ae87ca-4576-441e-9f5a-1329e20f6966.png](..%2FUsers%2FPMLS%2FDownloads%2Fd4ae87ca-4576-441e-9f5a-1329e20f6966.png)
+![d4ae87ca-4576-441e-9f5a-1329e20f6966](https://github.com/user-attachments/assets/0047a1a3-479f-475d-9cb3-4de433148aa4)
+
 
 
 Demonstartion Video
 
-[2024-12-19_11-51-06.mp4](..%2FUsers%2FPMLS%2FAppData%2FLocal%2FTemp%2F2024-12-19_11-51-06.mp4)
+
