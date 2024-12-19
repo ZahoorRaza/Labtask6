@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:madproject/utilis/AuthPage.dart';
 import 'package:madproject/views/All_chat_contacts_page.dart';
 import 'package:madproject/views/HomePage.dart';
 import 'package:madproject/views/Navigation.dart';
 import 'package:madproject/views/Profilepage.dart';
 import 'package:madproject/views/extensionPage.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-void main()
+
+
+void main() async
 {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 
@@ -16,7 +24,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: HomePage(),
+      home: AuthPage(),
     );
   }
 }
@@ -33,8 +41,8 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     homePage(),
     extensionPage(),
-    chatPage(),
-    profilePage(),
+    ChatsPage(),
+    ProfilePage(),
   ];
 
   // Handle navigation on BottomNavyBarItem tap

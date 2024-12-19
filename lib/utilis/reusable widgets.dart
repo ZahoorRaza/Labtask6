@@ -1,5 +1,20 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:madproject/main.dart';
+import 'package:madproject/views/LoginPage.dart';
+import 'package:madproject/views/LogupPage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:flutter/material.dart';
+import 'package:madproject/utilis/colors.dart';
 import 'colors.dart';
+
+
+
+
+
+
 
 Widget createCustomIcon(String imagePath, double _left, double _right, double _bottom, double _top, double? _width, double? _height)
 {
@@ -21,9 +36,9 @@ Widget createCustomIcon(String imagePath, double _left, double _right, double _b
           )
         ],
       ),
-      child: Image.asset(imagePath,
-        width: _width,
-        height: _height,
+      child: CircleAvatar(
+        backgroundColor: Colors.blue,
+        radius: 50,
       ),
     ),
 
@@ -31,69 +46,94 @@ Widget createCustomIcon(String imagePath, double _left, double _right, double _b
 
 }
 
+class Post {
+  final String userName;
+  final String postContent;
+  final String? postImage;
+  final DateTime createdAt;
+  int likes;
+  int comments;
 
-Widget createCustomFeed(String u_name, String userPost)
-{
+  Post({
+    required this.userName,
+    required this.postContent,
+    this.postImage,
+    required this.createdAt,
+    this.likes = 0,
+    this.comments = 0,
+  });
+}
+
+Widget createCustomFeed(Post post, BuildContext context, Function() onLike, Function() onComment) {
   return Card(
-      child: Column(
-        children: [
-          SizedBox(height: 20,),
-          Stack(
-            children: [
-              Image.asset("assets/Rectangle 2.png"),
-
-              Positioned(
-                left: 30,
-                top: 13,
-                child: Text(u_name,
-                  style: TextStyle(
-                    color: whiteColor,
-                    fontWeight: FontWeight.w900,
-                  ),),
-              ),
-            ],
-          ),
-
-          Image.asset(userPost),
-          Row(
-            children: [
-              SizedBox(width:50,height: 30,),
-              Image.asset("assets/heart.png"),
-              SizedBox(width:20,height: 30,),
-              Image.asset("assets/comment.png"),
-              SizedBox(width:20,height: 30,),
-              Image.asset("assets/share.png"),
-              SizedBox(width:20,height: 30,),
-              SizedBox(width:160,height: 30,),
-              Image.asset("assets/createPost.png"),
-
-
-
-
-            ],
-          ),
-          Container(
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: "$u_name: ",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    TextSpan(
-                      text: "Hello i am using facebook nice to meet you",
-                      style: TextStyle(fontWeight: FontWeight.normal),
-                    ),
-                  ],
+    child: Column(
+      children: [
+        SizedBox(height: 20),
+        Stack(
+          children: [
+            Image.asset("assets/Rectangle 2.png"), // Background image
+            Positioned(
+              left: 30,
+              top: 13,
+              child: Text(
+                post.userName,
+                style: TextStyle(
+                  color: whiteColor,
+                  fontWeight: FontWeight.w900,
                 ),
-              )
+              ),
+            ),
+          ],
+        ),
+        post.postImage != null
+            ? Image.network(post.postImage!)  // Display the image from URL
+            : Image.asset("assets/Rectangle 1.png"), // Placeholder image
+        Row(
+          children: [
+            SizedBox(width: 50, height: 30),
+            IconButton(
+              icon: Image.asset("assets/heart.png"),
+              onPressed: onLike, // Trigger like functionality
+            ),
+            Text("${post.likes}", style: TextStyle(fontSize: 16)),
+            SizedBox(width: 20, height: 30),
+            IconButton(
+              icon: Image.asset("assets/comment.png"),
+              onPressed: onComment,
+            ),
+            Text("${post.comments}", style: TextStyle(fontSize: 16)),
+            SizedBox(width: 20, height: 30),
+            IconButton(
+              icon: Image.asset("assets/share.png"),
+              onPressed: () {
+              },
+            ),
+          ],
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: "${post.userName}: ",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(
+                  text: post.postContent,
+                  style: TextStyle(fontWeight: FontWeight.normal),
+                ),
+              ],
+            ),
           ),
-        ],
-
-      )
-
+        ),
+      ],
+    ),
   );
 }
+
+
+
 
 Widget messgaeFeed(String profilePic, String titleText, String subText)
 {
@@ -123,5 +163,69 @@ return  Container(
   );
 }
 
+
+
+class myTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hintText;
+  final bool obsecureText;
+  const myTextField({super.key, required  this.controller, required this.hintText ,required this.obsecureText});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      obscureText: obsecureText,
+      decoration: InputDecoration(
+        enabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: whiteColor)
+        ),
+        focusedBorder: const OutlineInputBorder(
+    borderSide: BorderSide(color: whiteColor)
+      ),
+        fillColor: Colors.grey.shade200,
+        filled: true,
+        hintText: hintText,
+        hintStyle: TextStyle(color: Colors.grey.shade500)
+
+      ),
+    );
+  }
+}
+
+
+
+class myButton extends StatelessWidget {
+  final Function()? onTap;
+  final String text;
+    const myButton({super.key, required this.onTap, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(20),
+
+        decoration: BoxDecoration(
+          color: primaryColor,
+          borderRadius: BorderRadius.circular(8.0),
+
+
+        ),
+        child: Center(
+            child: Text(
+              text,
+              style: TextStyle(color: whiteColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 20),
+
+
+            ),
+        ),
+      ),
+    );
+  }
+}
 
 

@@ -1,184 +1,170 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import '../utilis/colors.dart';
-import '../utilis/reusable widgets.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:madproject/utilis/colors.dart';
+import 'package:madproject/views/likePostPage.dart';
+import 'package:madproject/views/userPostPage.dart';
+import 'dart:io';
 
-class profilePage extends StatefulWidget {
-  const profilePage({super.key});
+
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
 
   @override
-  State<profilePage> createState() => _profilePageState();
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _profilePageState extends State<profilePage> {
-  final List<String> imagePaths = [
-    'assets/1.png',
-    'assets/2.png',
-    'assets/3.png',
-    'assets/4.png',
-    'assets/5.png',
-    'assets/4.png',
-    'assets/2.png',
-    'assets/1.png',
-    'assets/3.png',
+class _ProfilePageState extends State<ProfilePage> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
+  File? _pickedImage;
+  String _userName = "";
+  String _userEmail = "";
+  String _profileImageUrl = "";
+  String _userId = "";
 
+  // Get User Profile Information
+  void _getUserProfile() async {
+    User? user = FirebaseAuth.instance.currentUser;
 
-  ];
+    if (user != null) {
+      DocumentSnapshot userData =
+      await _firestore.collection('users').doc(user.uid).get();
+
+      setState(() {
+        _userName = userData['username'] ?? 'No name';
+        _userEmail = userData['email'] ?? 'No email';
+        _profileImageUrl = userData['profilePicture'] ?? '';
+        _userId = user.uid;
+      });
+    }
+  }
+
+  // Pick Image for Profile
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        _pickedImage = File(image.path);
+      });
+    }
+  }
+
+  // Update Profile Image
+  Future<void> _updateProfileImage() async {
+    if (_pickedImage != null) {
+      try {
+        String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+        Reference ref = _firebaseStorage.ref().child('profile_images/$fileName');
+        await ref.putFile(_pickedImage!);
+        String downloadUrl = await ref.getDownloadURL();
+
+        User? user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await _firestore.collection('users').doc(user.uid).update({
+            'profilePicture': downloadUrl,
+          });
+
+          setState(() {
+            _profileImageUrl = downloadUrl;
+          });
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error updating profile image: $e")),
+        );
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserProfile();
+  }
+
   @override
   Widget build(BuildContext context) {
-    int? publishedPost = 10;
-    int? Follwers = 13;
-    int? Following = 149;
     return Scaffold(
-      body: Column(
-        children: [
-          Container(
-            width: 500,
-            height: 270,
-            child: Stack(
-              children: [
-                Positioned(
-                  child: Container(
-                    width: double.infinity,
-                  child: Image.asset("assets/BackPicture.png"),
-                ),
-
-                ),
-
-                Positioned(
-                  bottom: 60,
-                  left: 30,
-                  child: Container(
-                    width: 350,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.only(topLeft:Radius.circular(20),topRight: Radius.circular(20)),
-                      color: whiteColor,
-
-                    ),
-
-                  ),
-                ),
-
-                Positioned(
-                left: 150,
-                bottom: 40,
-                child: Container(
-                child: Image.asset("assets/myProfilePic.png")
-                ),
-                ),
-
-                Positioned(
-                  bottom: 15,
-                  left: 150,
-                  child: Container(
-                    child: Text("@fashion_me",style: TextStyle(fontWeight: FontWeight.bold),),
-
-                  ),
-                )
-              ],
-            ),
+      appBar: AppBar(
+        title: const Text(
+          'Profile',
+          style: TextStyle(
+              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24),
+        ),
+        centerTitle: true,
+        backgroundColor: whiteColor,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              FirebaseAuth.instance.signOut();
+              Navigator.pushReplacementNamed(context, '/login');
+            },
           ),
-          SizedBox(height: 20,),
-          Row(
-            children: [
-              SizedBox(width: 30,),
-
-                  Container(
-                    child: Image.asset("assets/iconProfile.png"),
-                  ),
-                  Container(
-                    child: Text("#fashion_me",style: TextStyle(fontWeight: FontWeight.w500),),
-                  ),
-              SizedBox(width: 10,),
-
-              Container(
-                child: Image.asset("assets/iconLocation.png"),
-              ),
-              Container(
-                child: Text("Quetta,Pakistan",style: TextStyle(fontWeight: FontWeight.w500),),
-              ),
-              SizedBox(width: 10,),
-
-              Container(
-                child: Image.asset("assets/iconCake.png"),
-              ),
-              Container(
-                child: Text("20 july 2003",style: TextStyle(fontWeight: FontWeight.w500),),
-              )
-            ],
-          ),
-          SizedBox(height: 15,),
-          Row(
-            children: [
-              SizedBox(width: 150,),
-              Image.asset("assets/add.png"),
-              SizedBox(width: 5,),
-              Text("Add new post",style: TextStyle(fontWeight: FontWeight.w300),),
-
-
-            ],
-          ),
-          SizedBox(height: 20,),
-          Row(
-            children: [
-              SizedBox(width: 100,),
-              Text("10", style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25)),
-                SizedBox(width: 40,),
-                Text("1.3K", style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25)),
-                  SizedBox(width: 40,),
-                  Text("149", style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25)),
-
-
-                ],
-          ),
-          SizedBox(height: 10,),
-          Row(
-            children: [
-              SizedBox(width: 100,),
-              Text("Posts", style: TextStyle(fontWeight: FontWeight.w300)),
-              SizedBox(width: 30,),
-              Text("Followers", style: TextStyle(fontWeight: FontWeight.w300)),
-              SizedBox(width: 30,),
-              Text("Following", style: TextStyle(fontWeight: FontWeight.w300)),
-            ],
-          ),
-          Container(
-            width: double.infinity,
-            height: 10,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: Offset(2, 4),
-                ),
-              ],
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          Expanded(
-            child: GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 8.0,
-                mainAxisSpacing: 8.0,
-              ),
-              itemCount: 9,
-              itemBuilder: (context,index)
-                {
-                return Container(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(imagePaths[index]),
-                  ),
-                );
-                }
-
-            ),
-          )
         ],
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: _pickImage,
+                child: CircleAvatar(
+                  radius: 70,
+                  backgroundImage: _profileImageUrl.isEmpty
+                      ? const AssetImage('assets/default_profile.png')
+                  as ImageProvider
+                      : NetworkImage(_profileImageUrl),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              Text(
+                _userName,
+                style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue), // Replace with primaryColor if defined
+              ),
+              Text(
+                _userEmail,
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                onPressed: _updateProfileImage,
+                child: const Text("Update Profile Image"),
+              ),
+
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => UserPostsPage(userId: _userId)),
+                  );
+                },
+                child: const Text("Your Posts"),
+              ),
+
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LikedPostsPage(userId: _userId)),
+                  );
+                },
+                child: const Text("Liked Posts"),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
